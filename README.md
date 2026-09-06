@@ -6,6 +6,254 @@ A modular PyTorch reconstruction of **GAIA-1: A Generative World Model for Auton
 
 ---
 
+ Repository Structure
+
+```text
+gaia1_reconstruction/
+│
+├── configs/
+│   ├── dev.yaml
+│   └── gaia1_scale_approx.yaml
+│
+├── gaia1/
+│   │
+│   ├── tokenizer/
+│   │   ├── model.py
+│   │   ├── blocks.py
+│   │   └── quantizer.py
+│   │
+│   ├── world_model/
+│   │   ├── model.py
+│   │   ├── blocks.py
+│   │   ├── multimodal.py
+│   │   ├── positional.py
+│   │   ├── packing.py
+│   │   └── generation.py
+│   │
+│   ├── diffusion/
+│   │   ├── video_decoder.py
+│   │   ├── blocks.py
+│   │   ├── schedule.py
+│   │   ├── tasks.py
+│   │   ├── loss.py
+│   │   └── sampling.py
+│   │
+│   ├── losses/
+│   │   ├── tokenizer_losses.py
+│   │   └── dino_teacher.py
+│   │
+│   ├── data/
+│   │   └── dataset.py
+│   │
+│   └── utils/
+│       ├── config.py
+│       └── ema.py
+│
+├── scripts/
+│   ├── train_tokenizer.py
+│   ├── train_world_model.py
+│   ├── train_video_decoder.py
+│   └── rollout.py
+│
+├── tests/
+│   └── test_shapes.py
+│
+├── ARCHITECTURE_NOTES.md
+├── RECONSTRUCTION_STATUS.json
+├── requirements.txt
+└── README.md
+```
+
+---
+
+# Installation
+
+Clone the repository:
+
+```bash
+git clone <https://github.com/anupamkliv/gaia1>
+cd gaia1_reconstruction
+```
+
+Create a Python environment:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+On Windows:
+
+```bash
+.venv\Scripts\activate
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+The main dependencies are:
+
+* PyTorch
+* torchvision
+* Hugging Face Transformers
+* einops
+* PyYAML
+* Pillow
+* NumPy
+
+Large-scale distributed training may additionally require:
+
+* FlashAttention
+* DeepSpeed
+* CUDA-compatible distributed training infrastructure
+
+---
+
+# Dataset Format
+
+The world-model dataset is expected to contain driving sequences with synchronized video, text, speed, and curvature.
+
+Example JSONL entry:
+
+```json
+{
+  "frames": [
+    "/data/sequence01/frame000.jpg",
+    "/data/sequence01/frame001.jpg"
+  ],
+  "texts": [
+    "Driving along a residential road",
+    "Approaching a parked vehicle"
+  ],
+  "speed": [
+    8.2,
+    8.0
+  ],
+  "curvature": [
+    0.001,
+    0.002
+  ]
+}
+```
+
+A complete training sequence can contain up to 26 timesteps.
+
+---
+
+# Training
+
+Training is divided into three stages.
+
+## Stage 1: Train the Image Tokenizer
+
+```bash
+python scripts/train_tokenizer.py \
+    --config configs/dev.yaml \
+    --data /path/to/images \
+    --out checkpoints/tokenizer.pt
+```
+
+After training, the tokenizer converts every frame into an \(18\times32\) grid of discrete tokens.
+
+---
+
+## Stage 2: Train the World Model
+
+```bash
+python scripts/train_world_model.py \
+    --config configs/dev.yaml \
+    --manifest /path/to/train.jsonl \
+    --tokenizer_ckpt checkpoints/tokenizer.pt \
+    --out checkpoints/world.pt
+```
+
+The trained tokenizer is frozen while training the world model.
+
+Conceptually:
+
+```text
+Video
+  │
+  ▼
+Frozen Tokenizer
+  │
+  ▼
+Image Tokens ───────────┐
+                        │
+Text ───────────────────┤
+                        ├──► World Model
+Speed ──────────────────┤
+                        │
+Curvature ──────────────┘
+                        │
+                        ▼
+                 Future Tokens
+```
+
+---
+
+## Stage 3: Train the Video Diffusion Decoder
+
+```bash
+python scripts/train_video_decoder.py \
+    --config configs/dev.yaml \
+    --manifest /path/to/train.jsonl \
+    --tokenizer_ckpt checkpoints/tokenizer.pt \
+    --out checkpoints/decoder.pt
+```
+
+The decoder learns to transform discrete visual-token sequences into RGB video.
+
+---
+
+# Inference
+
+A complete rollout can be generated using:
+
+```bash
+python scripts/rollout.py \
+    --config configs/dev.yaml \
+    --tokenizer_ckpt checkpoints/tokenizer.pt \
+    --world_ckpt checkpoints/world.pt \
+    --decoder_ckpt checkpoints/decoder.pt \
+    --input_clip example.pt \
+    --out generated.pt
+```
+
+The inference pipeline is:
+
+```text
+Observed Video
+      │
+      ▼
+Image Tokenizer
+      │
+      ▼
+Context Tokens
+      │
+      │      Text
+      │      Speed
+      │      Curvature
+      │        │
+      └────────┼──────► World Model
+               │
+               ▼
+        Future Image Tokens
+               │
+               ▼
+      Video Diffusion Decoder
+               │
+               ▼
+        Future RGB Video
+```
+
+---
+
+
+
 ## Overview
 
 GAIA-1 is a generative world model for autonomous driving that learns to predict future driving scenes from:
