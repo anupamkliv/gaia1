@@ -146,23 +146,6 @@ This encourages the discrete representation to preserve semantic structure rathe
 
 The tokenizer objective combines reconstruction, perceptual, adversarial, codebook, and semantic-distillation losses.
 
-$$
-\mathcal{L}_{tokenizer}
-=
-0.2\mathcal{L}_{L1}
-+
-2.0\mathcal{L}_{L2}
-+
-0.1\mathcal{L}_{perceptual}
-+
-\mathcal{L}_{GAN}
-+
-\mathcal{L}_{codebook}
-+
-0.1\mathcal{L}_{DINO}.
-$$
-
----
 
 # 2. Multimodal Representation
 
@@ -231,18 +214,6 @@ GAIA-1 needs to understand both:
 * **when** a token occurs
 * **where** the token occurs within a timestep
 
-The representation therefore combines:
-
-$$
-h_{t,s}
-=
-e_{token}
-+
-e_{temporal}(t)
-+
-e_{spatial}(s).
-$$
-
 Conceptually:
 
 ```text
@@ -309,36 +280,6 @@ The reported world model contains approximately **6.5 billion parameters**.
 ## Autoregressive objective
 
 The model predicts every image token conditioned on everything it is causally allowed to observe.
-
-$$
-p
-\left(
-z_{t,i}
-\mid
-z_{<t},
-z_{t,<i},
-c_{\leq t},
-a_{<t}
-\right)
-$$
-
-and minimizes
-
-$$
-\mathcal{L}_{WM}
-=
--\sum_t\sum_i
-\log
-p
-\left(
-z_{t,i}
-\mid
-z_{<t},
-z_{t,<i},
-c_{\leq t},
-a_{<t}
-\right).
-$$
 
 The loss is applied only to **image-token predictions**.
 
@@ -512,16 +453,6 @@ $$
 
 The reconstructed implementation uses the weighted diffusion objective
 
-$$
-\mathcal{L}_{diff}
-=
-0.1\mathcal{L}_{1}
-+
-1.0\mathcal{L}_{2}.
-$$
-
-An exponential moving average of the decoder parameters is maintained during training.
-
 ---
 
 # Repository Structure
@@ -589,7 +520,7 @@ gaia1_reconstruction/
 Clone the repository:
 
 ```bash
-git clone <repository-url>
+git clone <https://github.com/anupamkliv/gaia1>
 cd gaia1_reconstruction
 ```
 
