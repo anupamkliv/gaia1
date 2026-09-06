@@ -9,7 +9,7 @@ A modular PyTorch reconstruction of **GAIA-1: A Generative World Model for Auton
  Repository Structure
 
 ```text
-gaia1_reconstruction/
+gaia1/
 │
 ├── configs/
 │   ├── dev.yaml
@@ -72,7 +72,7 @@ Clone the repository:
 
 ```bash
 git clone <https://github.com/anupamkliv/gaia1>
-cd gaia1_reconstruction
+cd gaia1
 ```
 
 Create a Python environment:
