@@ -1,0 +1,37 @@
+image:
+  height: 288
+  width: 512
+
+tokenizer:
+  codebook_size: 8192
+  embed_dim: 256
+  base_channels: 64
+  channel_mults: [1, 2, 4, 4, 8]
+  num_res_blocks: 2
+  projection_dim: 256
+  commitment_beta: 0.25
+
+world_model:
+  hidden_dim: 512
+  num_layers: 8
+  num_heads: 8
+  ffn_mult: 4
+  max_timesteps: 26
+  text_tokens: 32
+  image_tokens: 576
+  action_tokens: 2
+  codebook_size: 8192
+  t5_name: google-t5/t5-large
+  freeze_t5: true
+  dropout: 0.0
+
+video_decoder:
+  base_channels: 64
+  channel_mults: [1, 2, 4, 4]
+  num_res_blocks: 2
+  attention_levels: [1, 2, 3]
+  num_heads: 8
+  token_embed_dim: 256
+  cond_dropout: 0.15
+  diffusion_steps: 1000
+  ema_decay: 0.999

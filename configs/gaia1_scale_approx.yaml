@@ -1,0 +1,38 @@
+# Paper anchors are exact where stated. Layer/head/channel schedules are reconstruction choices.
+image:
+  height: 288
+  width: 512
+
+tokenizer:
+  codebook_size: 8192
+  embed_dim: 1024
+  base_channels: 192
+  channel_mults: [1, 2, 4, 4, 4]
+  num_res_blocks: 3
+  projection_dim: 1024
+  commitment_beta: 0.25
+
+world_model:
+  hidden_dim: 4096
+  num_layers: 32       # reconstruction choice; paper does not disclose exact layer count
+  num_heads: 32        # reconstruction choice
+  ffn_mult: 4
+  max_timesteps: 26
+  text_tokens: 32
+  image_tokens: 576
+  action_tokens: 2
+  codebook_size: 8192
+  t5_name: google-t5/t5-large
+  freeze_t5: true
+  dropout: 0.0
+
+video_decoder:
+  base_channels: 320   # reconstruction choice; paper reports 2.6B total but not schedule
+  channel_mults: [1, 2, 4, 4]
+  num_res_blocks: 3
+  attention_levels: [1, 2, 3]
+  num_heads: 16
+  token_embed_dim: 1024
+  cond_dropout: 0.15
+  diffusion_steps: 1000
+  ema_decay: 0.999
